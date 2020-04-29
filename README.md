@@ -65,6 +65,7 @@ $ pip3 install --user -e gym/
 #### Pangolin dependencies:
 
 ```bash
+$ sudo apt-get install libxkbcommon-x11-dev
 $ sudo apt-get install -y libgl1-mesa-dev libglew-dev cmake
 $ pip3 install --user pyopengl Pillow pybind11
 $ git clone https://github.com/hzheng40/Pangolin
