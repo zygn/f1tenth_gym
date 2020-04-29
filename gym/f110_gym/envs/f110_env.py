@@ -46,7 +46,7 @@ import yaml
 import csv
 
 # from matplotlib.pyplot import imshow
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 class F110Env(gym.Env, utils.EzPickle):
     """
