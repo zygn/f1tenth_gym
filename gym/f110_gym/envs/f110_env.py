@@ -47,6 +47,7 @@ import csv
 
 # from matplotlib.pyplot import imshow
 # import matplotlib.pyplot as plt
+from sim_camera import Camera
 
 class F110Env(gym.Env, utils.EzPickle):
     """
