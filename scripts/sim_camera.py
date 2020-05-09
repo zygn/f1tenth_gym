@@ -2,6 +2,7 @@ import numpy as np
 from unrealcv.util import read_png, read_npy
 from unrealcv import client
 import time
+import pdb
 
 def deg(rad):
     return rad * 180.0/np.pi
@@ -15,6 +16,7 @@ class Camera(object):
         super(Camera, self).__init__()
         self.u_origin = unreal_origin
         client.connect()
+        client.request("vset /camera/0/horizontal_fieldofview 60")
     
     def to_upose(self, g_pose):
         """
