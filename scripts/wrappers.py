@@ -1,7 +1,5 @@
 import numpy as np
 import gym
-from sim_camera import Camera
-import pdb
 
 class DefaultCar(object):
     def __init__(self, spawn_opp=False, map_path='../maps/unreal.yaml', map_img_ext='.png', exec_dir='../build/', scan_fov=4.7, scan_beams=1080, scan_distance_to_base_link=0.275, csv_path=''):
@@ -54,7 +52,7 @@ class DefaultCar(object):
 
 class DefaultCameraCar(DefaultCar):
     def __init__(self, spawn_opp=False, map_path='../maps/unreal.yaml', map_img_ext='.png', exec_dir='../build/', scan_fov=4.7, scan_beams=1080, scan_distance_to_base_link=0.275, csv_path='', cam_height=20.):
-
+        from sim_camera import Camera
         super().__init__(spawn_opp=False, map_path='../maps/unreal.yaml', map_img_ext='.png', exec_dir='../build/', scan_fov=4.7, scan_beams=1080, scan_distance_to_base_link=0.275, csv_path='')
 
         # TODO: HARCODED NOW - import unreal_origin from map.yaml
@@ -78,22 +76,27 @@ class DefaultCameraCar(DefaultCar):
         img = self.cam.img_at(self.ego_pose(obs))
         obs['img'] = img
         return obs
+    
+class EgoCameraCar(DefaultCameraCar):
+    """
+    Formats observations so that only ego-car is returned (cleaner)
+    """
+    def __init__(self, spawn_opp=False, map_path='../maps/unreal.yaml', map_img_ext='.png', exec_dir='../build/', scan_fov=4.7, scan_beams=1080, scan_distance_to_base_link=0.275, csv_path='', cam_height=20.):
+        super().__init__(spawn_opp=False, map_path='../maps/unreal.yaml', map_img_ext='.png', exec_dir='../build/', scan_fov=4.7, scan_beams=1080, scan_distance_to_base_link=0.275, csv_path='', cam_height=cam_height)
 
-def trivial_agent():
-    env = DefaultCameraCar()
-    obs = env.reset()
-    while True:
-        action = {'ego_idx':0, 'speed':[1.0, 0.0], 'steer':[0.0, 0.0]}
-        obs, rew, _, info = env.step(action)
+    def ego_obs(self, obs):
+        ego_obs = {}
+        for key in obs:
+            if isinstance(obs[key], list) and len(obs[key]) == 2:
+                ego_obs[key] = obs[key][0]
+            else:
+                ego_obs[key] = obs[key]
+        return ego_obs
 
-def fgm_agent():
-    from fgm_agent import FGM
-    env = DefaultCameraCar()
-    obs = env.reset()
-    ego_agent = FGM(env.angle_min, env.angle_inc, speed=5.0)
-    while True:
-        angle, speed = ego_agent.do_FGM(obs['scans'][0])
-        action = {'ego_idx':0, 'speed':[speed, 0.0], 'steer':[angle, 0.0]}
-        obs, rew, _, info = env.step(action)
-
-fgm_agent()
+    def step(self, action):
+        obs, step_reward, done, info = super().step(action)
+        return self.ego_obs(obs), step_reward, done, info
+    
+    def reset(self):
+        obs = super().reset()
+        return self.ego_obs(obs)
