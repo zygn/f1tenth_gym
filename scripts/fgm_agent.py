@@ -30,10 +30,11 @@ class FGM(object):
     """
     Follow the Gap Method that approximates the best steering angle given a local lidar scan
     """
-    def __init__(self):
+    def __init__(self, angle_min, angle_increment, speed=2.0):
         #Set these when you get a callback
-        self.angle_min = -1
-        self.angle_increment = -1
+        self.angle_min = angle_min
+        self.angle_increment = angle_increment
+        self.speed = speed
 
     def refine_laserscan(self, ranges):
         if(len(ranges) < 180):
@@ -87,14 +88,6 @@ class FGM(object):
         else:
             return int(edge_i)
 
-    def scan_callback(self, data):
-        self.angle_min = data.angle_min
-        self.angle_increment = data.angle_increment
-        ranges = data.ranges
-        angle, vel =  self.do_FGM(ranges)
-        return angle, vel
-
-
     def do_FGM(self, ranges):
         # ranges = ranges[::-1]
         angle_min = self.angle_min
@@ -129,4 +122,4 @@ class FGM(object):
         if (angle < -0.34):
             angle = -0.34
 
-        return 1.0 * angle, 2.0
+        return 1.0 * angle, self.speed

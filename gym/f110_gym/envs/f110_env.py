@@ -47,7 +47,6 @@ import csv
 
 # from matplotlib.pyplot import imshow
 # import matplotlib.pyplot as plt
-from sim_camera import Camera
 
 class F110Env(gym.Env, utils.EzPickle):
     """
@@ -186,7 +185,7 @@ class F110Env(gym.Env, utils.EzPickle):
         cs_r = self.params[4]
         I_z = self.params[5]
         mass = self.params[6]
-        args = [path+'sim_server', str(self.timestep), str(self.num_agents), str(self.port), str(mu), str(h_cg), str(l_r), str(cs_f), str(cs_r), str(I_z), str(mass)]
+        args = [os.path.join(path, 'sim_server'), str(self.timestep), str(self.num_agents), str(self.port), str(mu), str(h_cg), str(l_r), str(cs_f), str(cs_r), str(I_z), str(mass)]
         self.sim_p = subprocess.Popen(args)
 
     def _set_map(self):
