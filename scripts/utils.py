@@ -106,9 +106,9 @@ def vis_roslidar(ranges, angle_min, angle_increment, idx=None, framename=None):
     """
     #convert lidar data to x,y coordinates
     x_ranges, y_ranges = lidar_polar_to_cart(ranges, angle_min, angle_increment)
-    lidar_frame = np.zeros((500, 500, 3)) * 75
+    lidar_frame = np.zeros((800, 800, 3)) * 75
     cx = 250
-    cy = 450
+    cy = 600
     rangecheck = lambda x, y: abs(x) < 1000. and abs(y) < 1000.
     if idx is not None and isinstance(idx, int):
         cv2.putText(lidar_frame, f"Frame:{idx}", (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255))

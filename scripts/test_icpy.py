@@ -5,6 +5,7 @@ import pickle
 import os
 import cv2
 import icp
+import matplotlib.pyplot as plt
 
 VIS = True
 FOLDERPATH = '../dataset'
@@ -26,35 +27,56 @@ angle_inc = scan_fov/scan_beams
 #1) Create obs_array and action_array from dataset (like pairs)
 pkl_list = os.listdir(FOLDERPATH)
 pkl_list.sort()
+# like_pairs = [(10, 31), (312, 301), (2730, 2731)]
+like_pairs = [(10, 312), (301, 2730), (312, 2731)]
 
-for pkl_name in pkl_list:
-    with open(os.path.join(FOLDERPATH, pkl_name), 'rb') as f:
+for pair in like_pairs:
+    with open(os.path.join(FOLDERPATH, pkl_list[pair[0]]), 'rb') as f:
         pkl_dict = pickle.load(f)
-        obs_array.append(pkl_dict["obs"])
-        action_array.append(pkl_dict["action"])
-        frame_names.append(pkl_name)
+        obs0 = pkl_dict["obs"]
+        act0 = pkl_dict["action"] 
+
+    with open(os.path.join(FOLDERPATH, pkl_list[pair[1]]), 'rb') as f:
+        pkl_dict = pickle.load(f)
+        obs1 = pkl_dict["obs"]
+        act1 = pkl_dict["action"] 
+
+    obs_array.append((obs0, obs1))
+    action_array.append((act0, act1))
 
 #2) Visualize before them
 if VIS:
-    for i, obs in enumerate(obs_array):
-        vis_roslidar(obs["scans"], angle_min, angle_inc, idx=i)
-        show_rgb(obs["img"])
-        cv2.waitKey(10)
+    for i, pair in enumerate(obs_array):
+        for obs in pair:
+            vis_roslidar(obs["scans"], angle_min, angle_inc, idx=i)
+            show_rgb(obs["img"])
+            cv2.waitKey(0)
 
 # (10, 11) LIKE
 # (312, 314) LIKE
-# (2730, 2800) LIKE
+# (2734, 2813) LIKE
 # (34, 58) UNLIKE
 
-like_pairs = [(10, 11), (312, 314), (2730, 2800)]
-#3) Do ICP and visualize output
-for pair in like_pairs:
+#3) ICP
+for pair in obs_array:
     #a) Convert to cartesian coordinates
-    obs0, obs1 = obs_array[10], obs_array[11]
+    obs0, obs1 = pair[0], pair[1]
     ranges0, ranges1 = obs0["scans"], obs1["scans"]
     x0, y0 = lidar_polar_to_cart(ranges0, angle_min, angle_inc)
     x1, y1 = lidar_polar_to_cart(ranges1, angle_min, angle_inc)
-    scan0 = np.vstack(x0, y0)
-    scan1 = np.vstack(x1, y1)
+    scan0 = np.vstack((x0, y0)).T
+    scan1 = np.vstack((x1, y1)).T
 
-    #b) 
+    #b) call method 
+    T, distances, iterations = icp.icp(scan0, scan1, tolerance=1e-3)
+    print(np.mean(distances))
+
+    #c) Transform output and visualize 
+    out = np.ones((scan0.shape[0], 3))
+    out[:, 0:2] = np.copy(scan1)
+    out = np.dot(T, out.T).T
+
+    plt.scatter(x0, y0, c='g')
+    plt.scatter(x1, y1, c='r')
+    plt.scatter(out[:, 0], out[:, 1], c='b')
+    plt.show()
