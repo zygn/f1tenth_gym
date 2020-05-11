@@ -88,7 +88,7 @@ def lidar_polar_to_cart(ranges, angle_min, angle_increment):
             y_ranges.append(y)
     return x_ranges, y_ranges
 
-def vis_roslidar(ranges, angle_min, angle_increment):
+def vis_roslidar(ranges, angle_min, angle_increment, idx=None, framename=None):
     """
     lidar_dict has the following format:
     {
@@ -110,10 +110,13 @@ def vis_roslidar(ranges, angle_min, angle_increment):
     cx = 250
     cy = 450
     rangecheck = lambda x, y: abs(x) < 1000. and abs(y) < 1000.
+    if idx is not None and isinstance(idx, int):
+        cv2.putText(lidar_frame, f"Frame:{idx}", (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255))
+    if framename is not None:
+        cv2.putText(lidar_frame, framename, (50, 50), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
     for x, y in zip(x_ranges, y_ranges):
         if (rangecheck(x, y)):
             scaled_x = int(cx + x)
             scaled_y = int(cy - y)
             cv2.circle(lidar_frame, (scaled_x, scaled_y), 1, (255, 255, 255), -1)
     cv2.imshow("Reformated", lidar_frame)
-    cv2.waitKey(1)
