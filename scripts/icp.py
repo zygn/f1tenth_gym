@@ -96,13 +96,14 @@ def icp(A, B, init_pose=None, max_iterations=20, tolerance=0.001):
         src = np.dot(init_pose, src)
 
     prev_error = 0
+    sum_translations = 0
 
     for i in range(max_iterations):
         # find the nearest neighbors between the current source and destination points
         distances, indices = nearest_neighbor(src[:m,:].T, dst[:m,:].T)
 
         # compute the transformation between the current source and nearest destination points
-        T,_,_ = best_fit_transform(src[:m,:].T, dst[:m,indices].T)
+        T,_, t = best_fit_transform(src[:m,:].T, dst[:m,indices].T)
 
         # update the current source
         src = np.dot(T, src)

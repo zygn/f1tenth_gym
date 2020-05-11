@@ -7,7 +7,7 @@ import cv2
 import icp
 import matplotlib.pyplot as plt
 
-VIS = True
+VIS = False
 FOLDERPATH = '../dataset'
 
 def show_rgb(rgb):
@@ -27,8 +27,8 @@ angle_inc = scan_fov/scan_beams
 #1) Create obs_array and action_array from dataset (like pairs)
 pkl_list = os.listdir(FOLDERPATH)
 pkl_list.sort()
-# like_pairs = [(10, 31), (312, 301), (2730, 2731)]
-like_pairs = [(10, 312), (301, 2730), (312, 2731)]
+like_pairs = [(10, 31), (312, 301), (2730, 2731)]
+# like_pairs = [(10, 312), (301, 2730), (312, 2731)]
 
 for pair in like_pairs:
     with open(os.path.join(FOLDERPATH, pkl_list[pair[0]]), 'rb') as f:
@@ -51,6 +51,7 @@ if VIS:
             vis_roslidar(obs["scans"], angle_min, angle_inc, idx=i)
             show_rgb(obs["img"])
             cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 # (10, 11) LIKE
 # (312, 314) LIKE
@@ -69,7 +70,7 @@ for pair in obs_array:
 
     #b) call method 
     T, distances, iterations = icp.icp(scan0, scan1, tolerance=1e-3)
-    print(np.mean(distances))
+    print(np.mean(distances), np.linalg.norm((scan1 - scan0), ord=1))
 
     #c) Transform output and visualize 
     out = np.ones((scan0.shape[0], 3))
