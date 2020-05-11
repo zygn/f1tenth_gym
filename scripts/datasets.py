@@ -16,24 +16,22 @@ class SteerDataset(Dataset):
         }
         """
         super(SteerDataset, self).__init__()
-        pkl_list = os.listdir(folderpath)
-        self.obs_array = []
-        self.action_array = []
-        for pkl_name in pkl_list:
-            with open(os.path.join(folderpath, pkl_name), 'rb') as f:
-                pkl_dict = pickle.load(f)
-                self.obs_array.append(pkl_dict["obs"])
-                self.action_array.append(pkl_dict["action"])
+        self.pkl_list = os.listdir(folderpath)
+        self.folderpath = folderpath
 
     def __len__(self):
-        return len(self.obs_array)
+        return len(self.pkl_list)
 
     def __getitem__(self, idx):
         """
         Returns tuple (img- C x H x W Tensor, angle-float 1-Tensor)
         """
-        obs = self.obs_array[idx]
-        action = self.action_array[idx]
+        pkl_name = self.pkl_list[idx]
+        with open(os.path.join(self.folderpath, pkl_name), 'rb') as f:
+            pkl_dict = pickle.load(f)
+
+        obs = pkl_dict.get("obs")
+        action = pkl_dict.get("action")
         cv_img = obs.get("img")[:, :, :3]
         ts_angle = torch.Tensor([action.get("angle") * 180.0/math.pi]).float()
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
