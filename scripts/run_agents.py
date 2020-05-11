@@ -3,7 +3,7 @@ def trivial_agent():
     env = DefaultCameraCar()
     obs = env.reset()
     while True:
-        action = {'ego_idx':0, 'speed':[1.0, 0.0], 'steer':[0.0, 0.0]}
+        action = {'ego_idx':0, 'speed':[0.0, 0.0], 'steer':[0.0, 0.0]}
         obs, rew, _, info = env.step(action)
 
 def fgm_agent():

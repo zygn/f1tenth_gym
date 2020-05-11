@@ -1,7 +1,7 @@
 image: unreal.png
-resolution: 0.022222222222222223
-origin: [-19.466666666666665, -1.288888888888889, 0.0]
+resolution: 0.03125
+origin: [-10.328125, -2.0, 0.0]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196
-unreal_origin: [1343.0, 3104.0, 131.0]
+unreal_origin: [88300.0, -40950.0, 6200.0]

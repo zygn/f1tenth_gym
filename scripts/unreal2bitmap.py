@@ -34,7 +34,8 @@ def get2clicks(in_img):
     return x1, x2, y1, y2
 
 #FILL THIS IN EVERYTIME
-origin_world = [1343.0, 3104.0, 131.0]
+# origin_world = [1343.0, 3104.0, 131.0]
+origin_world = [-2310.0, -50.0, -95.0]
 
 filepath = "../maps/unreal_map.png"
 input_map = cv2.imread(filepath)

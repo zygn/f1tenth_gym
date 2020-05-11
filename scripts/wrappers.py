@@ -33,7 +33,7 @@ class DefaultCar(object):
         # TODO: import csv_path for real, right now ignores other agent
         # TODO: HARCODED NOW - import initial_state from the map.yaml
         # TODO: Assuming ego car has obs_idx [0] (like in gym_bridge)
-        self.initial_state = {'x':[0., 2.0 if spawn_opp else 2000.], 'y': [0.0, 0.0], 'theta': [np.pi/2., 0.0]}
+        self.initial_state = {'x':[0., 2.0 if spawn_opp else 2000.], 'y': [0.0, 0.0], 'theta': [0., 0.0]}
         # self.obs, _, self.done, _ = self.racecar_env.reset(self.initial_state)
 
     def step(self, action):
@@ -56,7 +56,8 @@ class DefaultCameraCar(DefaultCar):
         super().__init__(spawn_opp=False, map_path='../maps/unreal.yaml', map_img_ext='.png', exec_dir='../build/', scan_fov=4.7, scan_beams=1080, scan_distance_to_base_link=0.275, csv_path='')
 
         # TODO: HARCODED NOW - import unreal_origin from map.yaml
-        self.cam = Camera(unreal_origin=[1345., 3110., 132.+cam_height])
+        unreal_origin = [88300.0, -40950.0, 6200.0]
+        self.cam = Camera(unreal_origin=unreal_origin)
     
     def ego_pose(self, obs):
         """ obs dict to [x, y, theta] of ego_car"""
@@ -79,7 +80,8 @@ class DefaultCameraCar(DefaultCar):
     
 class EgoCameraCar(DefaultCameraCar):
     """
-    Formats observations so that only ego-car is returned (cleaner)
+    Formats observations so that only ego-car is returned (cleaner), 
+    and LiDAR includes angle_min and angle_increment
     """
     def __init__(self, spawn_opp=False, map_path='../maps/unreal.yaml', map_img_ext='.png', exec_dir='../build/', scan_fov=4.7, scan_beams=1080, scan_distance_to_base_link=0.275, csv_path='', cam_height=20.):
         super().__init__(spawn_opp=False, map_path='../maps/unreal.yaml', map_img_ext='.png', exec_dir='../build/', scan_fov=4.7, scan_beams=1080, scan_distance_to_base_link=0.275, csv_path='', cam_height=cam_height)
