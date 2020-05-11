@@ -1,3 +1,10 @@
+import os, torch, cv2, pickle, math
+import numpy as np
+from torch.utils.data import Dataset
+from torchvision import transforms, utils
+
+__author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
+
 class SteerDataset(Dataset):
     def __init__(self, folderpath, transforms=None):
         """
@@ -27,7 +34,7 @@ class SteerDataset(Dataset):
         """
         obs = self.obs_array[idx]
         action = self.action_array[idx]
-        cv_img = obs.get("img")[0]
+        cv_img = obs.get("img")[:, :, :3]
         ts_angle = torch.Tensor([action.get("angle") * 180.0/math.pi]).float()
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
         return {"img":ts_img, "angle":ts_angle}
