@@ -11,7 +11,7 @@ obs.keys() = (['ego_idx', 'scans', 'poses_x', 'poses_y', 'poses_theta', 'linear_
 """
 
 RENDER = False
-FOLDERPATH = '../dataset'
+FOLDERPATH = '../dataset/env1'
 num_saves = 0
 
 def to_deg(rad):
@@ -28,7 +28,7 @@ def save_data(obs, action):
     num_saves+=1
 
 env = EgoCameraCar()
-ego_agent = FGM(env.angle_min, env.angle_inc, speed=5.0)
+ego_agent = FGM(env.angle_min, env.angle_inc, speed=4.0)
 obs = env.reset()
 while True:
     #1) Use FGM to get action and save data

@@ -7,6 +7,10 @@ import cv2
 import icp
 import matplotlib.pyplot as plt
 
+"""
+NOTE: TRIED ICP, but found the simple l1 distance was a better measurement metric to use
+"""
+
 VIS = False
 FOLDERPATH = '../dataset'
 
@@ -27,8 +31,8 @@ angle_inc = scan_fov/scan_beams
 #1) Create obs_array and action_array from dataset (like pairs)
 pkl_list = os.listdir(FOLDERPATH)
 pkl_list.sort()
-like_pairs = [(10, 31), (312, 301), (2730, 2731)]
-# like_pairs = [(10, 312), (301, 2730), (312, 2731)]
+# like_pairs = [(10, 31), (312, 301), (2730, 2731)]
+like_pairs = [(10, 312), (301, 2730), (312, 2731)]
 
 for pair in like_pairs:
     with open(os.path.join(FOLDERPATH, pkl_list[pair[0]]), 'rb') as f:
@@ -69,15 +73,9 @@ for pair in obs_array:
     scan1 = np.vstack((x1, y1)).T
 
     #b) call method 
-    T, distances, iterations = icp.icp(scan0, scan1, tolerance=1e-3)
-    print(np.mean(distances), np.linalg.norm((scan1 - scan0), ord=1))
-
-    #c) Transform output and visualize 
-    out = np.ones((scan0.shape[0], 3))
-    out[:, 0:2] = np.copy(scan1)
-    out = np.dot(T, out.T).T
+    l1dist = np.linalg.norm((scan1 - scan0), ord=1)
 
     plt.scatter(x0, y0, c='g')
     plt.scatter(x1, y1, c='r')
-    plt.scatter(out[:, 0], out[:, 1], c='b')
+    plt.title(f"l1dist:{l1dist}")
     plt.show()

@@ -16,7 +16,6 @@ class Camera(object):
         super(Camera, self).__init__()
         self.u_origin = unreal_origin
         client.connect()
-        client.request("vset /camera/0/horizontal_fieldofview 60")
     
     def to_upose(self, g_pose):
         """
