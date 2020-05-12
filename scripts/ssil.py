@@ -53,7 +53,8 @@ def save_data(obs, action):
 def generate_oracle_data(net, env):
     global episodes_so_far
     print(f"GENERATING ORACLE DATA")
-    angle_min, angle_incr = env.sensor_info.get("angle_min"), env.sensor_info.get("angle_incr")
+    # angle_min, angle_incr = env.sensor_info.get("angle_min"), env.sensor_info.get("angle_incr")
+    angle_min, angle_incr = env.angle_min, env.angle_inc
     oracle_agent = FGM(angle_min, angle_incr)
     obs = env.reset()
     num_episodes = 3
@@ -63,7 +64,7 @@ def generate_oracle_data(net, env):
         while not done:
             cv_img = obs["img"][:, :, :3]
             cv_img = cv2.resize(cv_img, (0, 0), fx=0.5, fy=0.5)
-            ranges = obs["scan"]
+            ranges = obs["scans"]
             if RENDER:
                 print(cv_img.shape)
                 cv2.imshow('FrontCamera', cv_img)
@@ -74,7 +75,8 @@ def generate_oracle_data(net, env):
             ts_angle = net(ts_img[None])
 
             # Take Action WITH Neural Network
-            action = {"angle": ts_angle.item() * np.pi/180.0, "speed":4.0}
+            # action = {"angle": ts_angle.item() * np.pi/180.0, "speed":4.0}
+            action = {'ego_idx':0, 'speed':[4.0, 0.0], 'steer':[ts_angle.item() * np.pi/180.0, 0.0]} 
             next_obs, _, done, _ = env.step(action)
 
             # Use FGM to get action, save it (relabel via expert policy)
@@ -170,7 +172,7 @@ def TRAIN(net, optim, loss_func, num_epochs):
         print("TRAIN LOSS:{}".format(train_epoch_loss))
         if best_train_loss > train_epoch_loss:
             best_train_loss = train_epoch_loss
-            torch.save(net.state_dict(), "train_sim_net")
+            torch.save(net.state_dict(), "dagger_net")
         train_writer.add_scalar("Loss", train_epoch_loss, base_epoch+epoch)
         global_loss.append(train_epoch_loss)
         with open("global_loss.pkl", 'wb') as f:
@@ -181,7 +183,7 @@ def main():
     seed_env()
     #1: Load Warmup Net
     net = NVIDIA_ConvNet().cuda()
-    net.load_state_dict(torch.load('train_sim_net'))
+    net.load_state_dict(torch.load('dagger_net'))
     net.cpu()
 
     #2: Get Model, Optimizer, Loss Function & Num Epochs

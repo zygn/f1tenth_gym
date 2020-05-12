@@ -35,7 +35,7 @@ def load_train_metadata():
     if os.path.exists(mp):
         metadata = pickle.load(open(mp, "rb"))
     else:
-        metadata = {"base_epoch": 200}
+        metadata = {"base_epoch": 0}
     return metadata
 
 def save_train_metadata(epoch):
