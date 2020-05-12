@@ -21,8 +21,8 @@ device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 
 __author__ = "Dhruv Karthik <dhruvkar@seas.upenn.edu>"
 FOLDERPATH = "../data/sim_train"
-KNN_MODELPATH = "../models/1/knn_model2"
-VISBATCH = True
+KNN_MODELPATH = "../models/1/knn_model"
+VISBATCH = False
 
 def seed_env():
     seed = 6582 
@@ -98,7 +98,6 @@ def loss_pass(net, loss_func, loader1, loader2, epoch, optim, op='train'):
         ts_tgtbatch1, ts_tgtbatch2 = d1.get("target").to(device), d2.get("target").to(device)
         ts_same_class = (ts_tgtbatch1 == ts_tgtbatch2).float()
 
-        pdb.set_trace()
 
         #2) Subsample 2:1 ratio of negative to positive samples
         all_pos_idxs = (ts_same_class == 1.0).nonzero()
@@ -114,7 +113,7 @@ def loss_pass(net, loss_func, loader1, loader2, epoch, optim, op='train'):
 
         ts_pos_img2 = ts_imgbatch2[all_pos_idxs[:, 0]]
         ts_neg_img2 = ts_imgbatch2[all_neg_idxs[:, 0]]
-        ts_neg_img2 = ts_neg_img1[0:neg_count]
+        ts_neg_img2 = ts_neg_img2[0:neg_count]
 
 
         ts_pos_class = ts_same_class[all_pos_idxs[:, 0]]
