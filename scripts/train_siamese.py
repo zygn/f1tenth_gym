@@ -2,6 +2,7 @@ from datasets import SteerDataset_Class
 from models import NVIDIA_ConvNet
 import os, pickle, random, time
 import matplotlib.pyplot as plt
+import cv2
 import pdb
 
 #torch imports
@@ -20,7 +21,8 @@ device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 
 __author__ = "Dhruv Karthik <dhruvkar@seas.upenn.edu>"
 FOLDERPATH = "../data/sim_train"
-KNN_MODELPATH = "knn_model"
+KNN_MODELPATH = "../models/1/knn_model2"
+VISBATCH = True
 
 def seed_env():
     seed = 6582 
@@ -60,6 +62,31 @@ def pairwise_loss(features_1, features_2, same_class):
   losses = torch.where((same_class[:, 0] == 1.0), diffs_squared_sum, torch.max(torch.tensor([0.], device=device), m - diffs_squared_sum))
   return torch.sum(losses)
 
+def visualize_batch(ts_imgs1, ts_imgs2, ts_same_class, ts_tgtbatch1, ts_tgtbatch2):
+    n = ts_imgs1.shape[0]
+    fig, axs = plt.subplots(1, 2)
+    fullframe = None
+    for i in range(n):
+        print(i)
+        img1 = ts_imgs1[i].permute(1, 2, 0).cpu().numpy().astype(np.uint8)
+        img1 = cv2.resize(img1, (0, 0), fx=0.5, fy=0.5)
+        lbl1 = ts_tgtbatch1[i].item()
+        img2 = ts_imgs2[i].permute(1, 2, 0).cpu().numpy()
+        img2 = cv2.resize(img2, (0, 0), fx=0.5, fy=0.5)
+        lbl2 = ts_tgtbatch2[i].item()
+        # axs[0].imshow(img1)
+        # axs[0].set_title(f"{lbl1}")
+        # axs[1].imshow(img2)
+        # axs[1].set_title(f"{lbl2}")
+        thisframe = np.hstack((img1, img2))
+        cv2.putText(thisframe, f"{lbl1}, {lbl2}", (10, 30), cv2.FONT_HERSHEY_COMPLEX, 0.55, (255, 255, 255))
+        if fullframe is None:
+            fullframe = thisframe.copy()
+        else:
+            fullframe = np.vstack((fullframe, thisframe))
+    cv2.imshow("batch", fullframe.astype(np.uint8))
+    cv2.waitKey(0)
+
 def loss_pass(net, loss_func, loader1, loader2, epoch, optim, op='train'):
     print("{op} epoch: {epoch}".format(op=op, epoch=epoch)) 
     t0 = time.time()
@@ -71,12 +98,13 @@ def loss_pass(net, loss_func, loader1, loader2, epoch, optim, op='train'):
         ts_tgtbatch1, ts_tgtbatch2 = d1.get("target").to(device), d2.get("target").to(device)
         ts_same_class = (ts_tgtbatch1 == ts_tgtbatch2).float()
 
+        pdb.set_trace()
 
         #2) Subsample 2:1 ratio of negative to positive samples
         all_pos_idxs = (ts_same_class == 1.0).nonzero()
         all_neg_idxs = (ts_same_class == 0.0).nonzero()
         pos_count = all_pos_idxs.shape[0]
-        neg_count = pos_count*2
+        neg_count = pos_count
         if pos_count == 0:
             continue
 
@@ -84,9 +112,10 @@ def loss_pass(net, loss_func, loader1, loader2, epoch, optim, op='train'):
         ts_neg_img1 = ts_imgbatch1[all_neg_idxs[:, 0]]
         ts_neg_img1 = ts_neg_img1[0:neg_count]
 
-        ts_pos_img2 = ts_imgbatch1[all_pos_idxs[:, 0]]
+        ts_pos_img2 = ts_imgbatch2[all_pos_idxs[:, 0]]
         ts_neg_img2 = ts_imgbatch2[all_neg_idxs[:, 0]]
         ts_neg_img2 = ts_neg_img1[0:neg_count]
+
 
         ts_pos_class = ts_same_class[all_pos_idxs[:, 0]]
         ts_neg_class = ts_same_class[all_neg_idxs[:, 0]]
@@ -96,6 +125,20 @@ def loss_pass(net, loss_func, loader1, loader2, epoch, optim, op='train'):
         ts_imgs2 = torch.cat((ts_pos_img2, ts_neg_img2), dim=0)
 
         ts_classes = torch.cat((ts_pos_class, ts_neg_class), dim=0)
+
+        if VISBATCH:
+            ts_pos_tgt1 = ts_tgtbatch1[all_pos_idxs[:, 0]]
+            ts_neg_tgt1 = ts_tgtbatch1[all_neg_idxs[:, 0]]
+            ts_neg_tgt1 = ts_neg_tgt1[0:neg_count]
+
+            ts_pos_tgt2 = ts_tgtbatch2[all_pos_idxs[:, 0]]
+            ts_neg_tgt2 = ts_tgtbatch2[all_neg_idxs[:, 0]]
+            ts_neg_tgt2 = ts_neg_tgt2[0:neg_count]
+
+            ts_tgt1 = torch.cat((ts_pos_tgt1, ts_neg_tgt1), dim=0)
+            ts_tgt2 = torch.cat((ts_pos_tgt2, ts_neg_tgt2), dim=0)
+            visualize_batch(ts_imgbatch1, ts_imgbatch2, ts_same_class, ts_tgtbatch1, ts_tgtbatch2)
+
 
         #3) Classic Training Loop
         optim.zero_grad()
@@ -116,18 +159,20 @@ def loss_pass(net, loss_func, loader1, loader2, epoch, optim, op='train'):
     return total_epoch_loss
 
 seed_env()
+# plt.ion()
+# plt.show()
 
 # 1: Load Dataset, split into train & val
 print(f"Loading Dataset from {FOLDERPATH} ...")
 knn_model = pickle.load(open(KNN_MODELPATH, 'rb'))
 dset = SteerDataset_Class(FOLDERPATH, knn_model)
-train_loader1, _ = get_dataloader(dset, 32)
-train_loader2, _ = get_dataloader(dset, 32)
+train_loader1, _ = get_dataloader(dset, 10)
+train_loader2, _ = get_dataloader(dset, 10)
 d = dset[0]
 
 # 2: Get Model, Optimizer, Loss Function & Num Epochs
 net = NVIDIA_ConvNet(args_dict={"fc_shape":64*23*33}).to(device)
-optim = torch.optim.Adam(net.parameters(), lr=1e-3)
+optim = torch.optim.Adam(net.parameters())
 loss_func = torch.nn.MSELoss()
 num_epochs = int(1e+4)
 
@@ -144,8 +189,8 @@ for epoch in range(num_epochs):
     print("TRAIN LOSS:{}".format(train_epoch_loss))
     if best_train_loss > train_epoch_loss:
         best_train_loss = train_epoch_loss
-        torch.save(net.state_dict(), "train_siamese_net")
-    train_writer.add_scalar("Loss", train_epoch_loss, epoch)
+        torch.save(net.state_dict(), "../models/1/train_siamese_net")
+    train_writer.add_scalar("Siamese_Loss", train_epoch_loss, epoch)
     train_losses.append(train_epoch_loss)
     if epoch % 4 == 0:
-        pickle.dump(train_losses, open("train_losses.pkl", "wb"))
+        pickle.dump(train_losses, open("../models/1/siamese_train_losses.pkl", "wb"))
