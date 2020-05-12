@@ -12,7 +12,7 @@ obs.keys() = (['ego_idx', 'scans', 'poses_x', 'poses_y', 'poses_theta', 'linear_
 
 RENDER = False
 FOLDERPATH = '../dataset/sim_train'
-PREFIX = 'env1'
+PREFIX = 'env2'
 num_saves = 0
 
 def to_deg(rad):

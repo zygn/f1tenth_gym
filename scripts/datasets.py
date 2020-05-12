@@ -25,6 +25,7 @@ class SteerDataset(Dataset):
     def __getitem__(self, idx):
         """
         Returns tuple (img- C x H x W Tensor, angle-float 1-Tensor)
+        OBS ARRAY HAS ANGLE IN DEGREES
         """
         pkl_name = self.pkl_list[idx]
         with open(os.path.join(self.folderpath, pkl_name), 'rb') as f:
@@ -34,7 +35,8 @@ class SteerDataset(Dataset):
         action = pkl_dict.get("action")
         cv_img = obs.get("img")[:, :, :3]
         cv_img = cv2.resize(cv_img, (0, 0), fx=0.5, fy=0.5)
-        ts_angle = torch.Tensor([action.get("angle") * 180.0/math.pi]).float()
+        # ts_angle = torch.Tensor([action.get("angle") * 180.0/math.pi]).float()
+        ts_angle = torch.Tensor([action.get("angle")]).float()
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
         return {"img":ts_img, "angle":ts_angle}
     
