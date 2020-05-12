@@ -20,7 +20,7 @@ device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 
 __author__ = "Dhruv Karthik <dhruvkar@seas.upenn.edu>"
 FOLDERPATH = "../data/sim_train"
-CONTINUE = True
+MODEL_SAVEPATH = "../models/1/baseline_net"
 
 def seed_env():
     seed = 6582 
@@ -98,11 +98,9 @@ d = dset[0]
 
 # 2: Get Model, Optimizer, Loss Function & Num Epochs
 net = NVIDIA_ConvNet(args_dict={"fc_shape":64*23*33}).to(device)
-if CONTINUE:
-    net.load_state_dict(torch.load('train_sim_net'))
-optim = torch.optim.Adam(net.parameters(), lr=1e-6)
+optim = torch.optim.Adam(net.parameters())
 loss_func = torch.nn.MSELoss()
-num_epochs = 1e+4
+num_epochs = int(1e+4)
 
 train_losses = []
 
@@ -120,8 +118,8 @@ for epoch in range(num_epochs):
     print("TRAIN LOSS:{}".format(train_epoch_loss))
     if best_train_loss > train_epoch_loss:
         best_train_loss = train_epoch_loss
-        torch.save(net.state_dict(), "train_sim_net")
+        torch.save(net.state_dict(), MODEL_SAVEPATH)
     train_writer.add_scalar("Loss", train_epoch_loss, base_epoch+epoch)
     train_losses.append(train_epoch_loss)
     if epoch % 4 == 0:
-        pickle.dump(train_losses, open("train_losses.pkl", "wb"))
+        pickle.dump(train_losses, open("../models/1/train_losses.pkl", "wb"))

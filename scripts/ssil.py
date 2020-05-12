@@ -24,8 +24,11 @@ train_writer = SummaryWriter(logdir="../logs")
 device = torch.device('cpu')
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
+
+TRAIN_DGR = False
 RENDER = False
 FOLDERPATH = '../data/online'
+MODELPATH = '../models/1/dagger_net'
 num_saves = 0
 episodes_so_far = 0
 global_returns = []
@@ -82,7 +85,8 @@ def generate_oracle_data(net, env):
             # Use FGM to get action, save it (relabel via expert policy)
             angle, _ = oracle_agent.do_FGM(ranges)
             action = {"angle":angle, "speed":4.0} 
-            save_data(obs, action)
+            if TRAIN_DGR:
+                save_data(obs, action)
             obs = next_obs
             sum_rewards += 1
             if cv2.waitKey(3) & 0xFF == ord('q'):
@@ -91,10 +95,13 @@ def generate_oracle_data(net, env):
                 obs = env.reset()  
 
         episodes_so_far += 1
-        train_writer.add_scalar("Num Timesteps before Crashing", sum_rewards, i + episodes_so_far) 
+
+        if TRAIN_DGR:
+            train_writer.add_scalar("Num Timesteps before Crashing", sum_rewards, i + episodes_so_far) 
         global_returns.append(sum_rewards)
-        with open("global_returns.pkl", 'wb') as f:
-            pickle.dump(global_returns, f)
+        if TRAIN_DGR:
+            with open("global_returns.pkl", 'wb') as f:
+                pickle.dump(global_returns, f)
 
 def save_train_metadata(epoch):
     mp = "train_metadata"
@@ -172,7 +179,7 @@ def TRAIN(net, optim, loss_func, num_epochs):
         print("TRAIN LOSS:{}".format(train_epoch_loss))
         if best_train_loss > train_epoch_loss:
             best_train_loss = train_epoch_loss
-            torch.save(net.state_dict(), "dagger_net")
+            torch.save(net.state_dict(), MODELPATH)
         train_writer.add_scalar("Loss", train_epoch_loss, base_epoch+epoch)
         global_loss.append(train_epoch_loss)
         with open("global_loss.pkl", 'wb') as f:
@@ -183,7 +190,7 @@ def main():
     seed_env()
     #1: Load Warmup Net
     net = NVIDIA_ConvNet().cuda()
-    net.load_state_dict(torch.load('dagger_net'))
+    net.load_state_dict(torch.load(MODELPATH))
     net.cpu()
 
     #2: Get Model, Optimizer, Loss Function & Num Epochs
@@ -198,8 +205,9 @@ def main():
             net.cpu()
             generate_oracle_data(net, env)
         else: #TRAIN for about 50 epochs
-            net.cuda()
-            TRAIN(net, optim, loss_func, num_epochs)
+            if not TRAIN:
+                net.cuda()
+                TRAIN(net, optim, loss_func, num_epochs)
         idx+=1
 
 if __name__ == '__main__':
