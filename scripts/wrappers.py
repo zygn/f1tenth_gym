@@ -47,6 +47,7 @@ class DefaultCar(object):
             action: {'ego_idx':0, 'speed':[ego_speed, opp_speed], 'steer':[ego_steer (rads), opp_steer (rads)]}
         """
         self.obs, step_reward, self.done, info = self.racecar_env.step(action)
+        self.done = self.obs["collisions"][0]
         return self._get_obs(), step_reward, self.done, info
     
     def reset(self):

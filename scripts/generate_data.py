@@ -11,7 +11,8 @@ obs.keys() = (['ego_idx', 'scans', 'poses_x', 'poses_y', 'poses_theta', 'linear_
 """
 
 RENDER = False
-FOLDERPATH = '../dataset/env1'
+FOLDERPATH = '../dataset/sim_train'
+PREFIX = 'env1'
 num_saves = 0
 
 def to_deg(rad):
@@ -22,7 +23,7 @@ def save_data(obs, action):
     if(num_saves == 0 and not os.path.exists(FOLDERPATH)):
         os.mkdir(FOLDERPATH)
     pkl_dict = {"obs":obs, "action":action}
-    filename = f"{FOLDERPATH}/sim_{num_saves}.pkl"
+    filename = f"{FOLDERPATH}/{PREFIX}_sim_{num_saves}.pkl"
     with open(filename, 'wb') as f:
         pickle.dump(pkl_dict, f)
     num_saves+=1

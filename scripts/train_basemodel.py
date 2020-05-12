@@ -2,6 +2,7 @@ from datasets import SteerDataset
 from models import NVIDIA_ConvNet
 import os, pickle, random, time
 import matplotlib.pyplot as plt
+import pdb
 
 #torch imports
 import numpy as np
@@ -18,7 +19,8 @@ train_writer = SummaryWriter(logdir="../logs")
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
 __author__ = "Dhruv Karthik <dhruvkar@seas.upenn.edu>"
-FOLDERPATH = "../data/env1"
+FOLDERPATH = "../data/sim_train"
+CONTINUE = True
 
 def seed_env():
     seed = 6582 
@@ -33,7 +35,7 @@ def load_train_metadata():
     if os.path.exists(mp):
         metadata = pickle.load(open(mp, "rb"))
     else:
-        metadata = {"base_epoch": 0}
+        metadata = {"base_epoch": 200}
     return metadata
 
 def save_train_metadata(epoch):
@@ -95,10 +97,12 @@ train_dataloader, valid_dataloader = get_dataloader(dset, 32)
 d = dset[0]
 
 # 2: Get Model, Optimizer, Loss Function & Num Epochs
-net = NVIDIA_ConvNet().to(device)
+net = NVIDIA_ConvNet(args_dict={"fc_shape":64*23*33}).to(device)
+if CONTINUE:
+    net.load_state_dict(torch.load('train_sim_net'))
 optim = torch.optim.Adam(net.parameters(), lr=1e-6)
 loss_func = torch.nn.MSELoss()
-num_epochs = 200
+num_epochs = 1e+4
 
 train_losses = []
 
