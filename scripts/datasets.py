@@ -71,6 +71,6 @@ class SteerDataset_Class(Dataset):
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
 
         scans = np.array(obs.get("scans"))[None]
-        target = self.knn_model.fit(scans)
+        target = self.knn_model.predict(scans)
         ts_target = torch.from_numpy(target)
         return {"img":ts_img, "target":ts_target}
