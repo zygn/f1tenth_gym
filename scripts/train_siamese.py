@@ -1,5 +1,5 @@
 from datasets import SteerDataset_Class
-from models import NVIDIA_ConvNet
+from models import NVIDIA_Siamese
 import os, pickle, random, time
 import matplotlib.pyplot as plt
 import cv2
@@ -22,7 +22,7 @@ device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 __author__ = "Dhruv Karthik <dhruvkar@seas.upenn.edu>"
 FOLDERPATH = "../data/sim_train"
 KNN_MODELPATH = "../models/1/knn_model"
-VISBATCH = False
+VISBATCH = True
 
 def seed_env():
     seed = 6582 
@@ -79,6 +79,8 @@ def visualize_batch(ts_imgs1, ts_imgs2, ts_same_class, ts_tgtbatch1, ts_tgtbatch
         # axs[1].imshow(img2)
         # axs[1].set_title(f"{lbl2}")
         thisframe = np.hstack((img1, img2))
+        cv2.imshow("thisframe", thisframe.astype(np.uint8))
+        cv2.waitKey(0)
         cv2.putText(thisframe, f"{lbl1}, {lbl2}", (10, 30), cv2.FONT_HERSHEY_COMPLEX, 0.55, (255, 255, 255))
         if fullframe is None:
             fullframe = thisframe.copy()
@@ -170,7 +172,7 @@ train_loader2, _ = get_dataloader(dset, 10)
 d = dset[0]
 
 # 2: Get Model, Optimizer, Loss Function & Num Epochs
-net = NVIDIA_ConvNet(args_dict={"fc_shape":64*23*33}).to(device)
+net = NVIDIA_Siamese(args_dict={"fc_shape":64*23*33}).to(device)
 optim = torch.optim.Adam(net.parameters())
 loss_func = torch.nn.MSELoss()
 num_epochs = int(1e+4)
@@ -189,6 +191,8 @@ for epoch in range(num_epochs):
     if best_train_loss > train_epoch_loss:
         best_train_loss = train_epoch_loss
         torch.save(net.state_dict(), "../models/1/train_siamese_net")
+    if epoch % 2 == 0:
+        torch.save(net.state_dict(), f"../models/1/{epoch}_siamese_net")
     train_writer.add_scalar("Siamese_Loss", train_epoch_loss, epoch)
     train_losses.append(train_epoch_loss)
     if epoch % 4 == 0:
