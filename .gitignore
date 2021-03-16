@@ -7,3 +7,7 @@ __pycache__
 gym/f110_gym/unittest/maps/
 gym/f110_gym/unittest/centerline/
 docs/_build/
+*/.vscode/
+*/.csproj
+*.sln
+*/.project

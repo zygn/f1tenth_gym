@@ -89,6 +89,8 @@ class F110Env(gym.Env, utils.EzPickle):
             timestep (float, default=0.01): physics timestep
 
             ego_idx (int, default=0): ego's index in list of agents
+
+            has_camera (bool, default=False): whether agents have camera
     """
     metadata = {'render.modes': ['human', 'human_fast']}
 
@@ -139,6 +141,12 @@ class F110Env(gym.Env, utils.EzPickle):
         except:
             self.ego_idx = 0
 
+        # camera bool
+        try:
+            self.has_camera = kwargs['has_camera']
+        except:
+            self.has_camera = False
+
         # radius to consider done
         self.start_thresh = 0.5  # 10cm
 
@@ -170,7 +178,7 @@ class F110Env(gym.Env, utils.EzPickle):
         self.start_rot = np.eye(2)
 
         # initiate stuff
-        self.sim = Simulator(self.params, self.num_agents, self.seed)
+        self.sim = Simulator(self.params, self.num_agents, self.seed, has_camera=self.has_camera)
         self.sim.set_map(self.map_path, self.map_ext)
 
         # rendering

@@ -34,6 +34,7 @@ from numba import njit
 from f110_gym.envs.dynamic_models import vehicle_dynamics_st, pid
 from f110_gym.envs.laser_models import ScanSimulator2D, check_ttc_jit, ray_cast
 from f110_gym.envs.collision_models import get_vertices, collision_multiple
+from f110_gym.envs.camera import RaceCarCamera
 
 class RaceCar(object):
     """
@@ -53,7 +54,7 @@ class RaceCar(object):
 
     """
 
-    def __init__(self, params, seed, is_ego=False, time_step=0.01, num_beams=1080, fov=4.7):
+    def __init__(self, params, seed, is_ego=False, time_step=0.01, num_beams=1080, fov=4.7, has_camera=False):
         """
         Init function
 
@@ -139,6 +140,10 @@ class RaceCar(object):
                     to_fr = dist_fr / np.sin(-angle - np.pi/2)
                     self.side_distances[i] = min(to_side, to_fr)
 
+        # camera init
+        self.has_camera = has_camera
+        self.camera = None
+
     def update_params(self, params):
         """
         Updates the physical parameters of the vehicle
@@ -161,6 +166,8 @@ class RaceCar(object):
             map_ext (str): extension of the map image file
         """
         self.scan_simulator.set_map(map_path, map_ext)
+        if self.has_camera:
+            self.camera = RaceCarCamera(self.scan_simulator.orig_x, self.scan_simulator.orig_y, self.scan_simulator.map_width, self.scan_simulator.map_height, self.scan_simulator.map_resolution)
 
     def reset(self, pose):
         """
@@ -289,6 +296,10 @@ class RaceCar(object):
         # update scan
         self.current_scan = self.scan_simulator.scan(np.append(self.state[0:2], self.state[4]))
 
+        # update camera
+        if self.has_camera:
+            self.camera.send_pose(np.array([self.state[0], self.state[1], self.state[4]]))
+
     def update_opp_poses(self, opp_poses):
         """
         Updates the vehicle's information on other vehicles
@@ -336,7 +347,7 @@ class Simulator(object):
 
     """
 
-    def __init__(self, params, num_agents, seed, time_step=0.01, ego_idx=0):
+    def __init__(self, params, num_agents, seed, time_step=0.01, ego_idx=0, has_camera=False):
         """
         Init function
 
@@ -360,13 +371,21 @@ class Simulator(object):
         self.collisions = np.zeros((self.num_agents, ))
         self.collision_idx = -1 * np.ones((self.num_agents, ))
 
+        self.has_camera = has_camera
+
         # initializing agents
         for i in range(self.num_agents):
             if i == ego_idx:
-                ego_car = RaceCar(params, self.seed, is_ego=True)
+                if has_camera:
+                    ego_car = RaceCar(params, self.seed, is_ego=True, has_camera=True)
+                else:
+                    ego_car = RaceCar(params, self.seed, is_ego=True)
                 self.agents.append(ego_car)
             else:
-                agent = RaceCar(params, self.seed)
+                if has_camera:
+                    agent = RaceCar(params, self.seed, has_camera=True)
+                else:
+                    agent = RaceCar(params, self.seed)
                 self.agents.append(agent)
 
     def set_map(self, map_path, map_ext):
@@ -445,6 +464,8 @@ class Simulator(object):
         # check collisions between all agents
         self.check_collision()
 
+        if self.has_camera:
+            all_images = []
 
         for i, agent in enumerate(self.agents):
             # update agent's information on other agents
@@ -453,6 +474,11 @@ class Simulator(object):
 
             # update each agent's current scan based on other agents
             agent.update_scan()
+
+            # receive images
+            if self.has_camera:
+                img = agent.camera.recv_img()
+                all_images.append(img)
 
             # update agent collision with environment
             if agent.in_collision:
@@ -478,6 +504,11 @@ class Simulator(object):
             observations['linear_vels_x'].append(agent.state[3])
             observations['linear_vels_y'].append(0.)
             observations['ang_vels_z'].append(agent.state[5])
+
+        # optional for camera agents
+        if self.has_camera:
+            observations['images'] = []
+            observations['images'].append(all_images)
 
         return observations
 

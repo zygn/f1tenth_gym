@@ -184,23 +184,33 @@ class PurePursuitPlanner:
 
 
 if __name__ == '__main__':
+    import pyglet
+
+    import matplotlib.pyplot as plt
 
     work = {'mass': 3.463388126201571, 'lf': 0.15597534362552312, 'tlad': 0.82461887897713965, 'vgain': 0.90338203837889}
+    # work = {'mass': 3.463388126201571, 'lf': 0.15597534362552312, 'tlad': 0.82461887897713965, 'vgain': 1.5}
     with open('config_example_map.yaml') as file:
         conf_dict = yaml.load(file, Loader=yaml.FullLoader)
     conf = Namespace(**conf_dict)
 
-    env = gym.make('f110_gym:f110-v0', map=conf.map_path, map_ext=conf.map_ext, num_agents=1)
+    env = gym.make('f110_gym:f110-v0', map=conf.map_path, map_ext=conf.map_ext, num_agents=1, has_camera=False)
     obs, step_reward, done, info = env.reset(np.array([[conf.sx, conf.sy, conf.stheta]]))
     env.render()
     planner = PurePursuitPlanner(conf, 0.17145+0.15875)
 
     laptime = 0.0
     start = time.time()
-
+    it = 0
+    all_theta = []
     while not done:
         speed, steer = planner.plan(obs['poses_x'][0], obs['poses_y'][0], obs['poses_theta'][0], work['tlad'], work['vgain'])
         obs, step_reward, done, info = env.step(np.array([[steer, speed]]))
         laptime += step_reward
-        env.render(mode='human')
+        env.render(mode='human_fast')
+        # pyglet.image.get_buffer_manager().get_color_buffer().save('video_out/'+str(it)+'.png')
+        it += 1
+        all_theta.append(obs['poses_theta'][0])
     print('Sim elapsed time:', laptime, 'Real elapsed time:', time.time()-start)
+    plt.plot(all_theta)
+    plt.show()
