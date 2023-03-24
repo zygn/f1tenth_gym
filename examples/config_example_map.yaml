@@ -5,12 +5,14 @@ perf_num: 6
 
 # map paths
 map_path: './example_map'
+#map_path: './YasMarina/YasMarina_map'
 map_ext: '.png'
 
 # starting pose for map
 sx: 0.7
 sy: 0.0
 stheta: 1.37079632679
+#stheta: 0.0
 
 # raceline path and indices
 wpt_path: './example_waypoints.csv'
